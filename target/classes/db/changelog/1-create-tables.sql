@@ -1,0 +1,25 @@
+---- Create Customer Table
+--CREATE TABLE IF NOT EXISTS customer (
+--    id SERIAL PRIMARY KEY,
+--    name VARCHAR(255) NOT NULL
+--);
+--
+---- Create Bank Account Table
+--CREATE TABLE IF NOT EXISTS bank_account (
+--    id SERIAL PRIMARY KEY,
+--    account_number VARCHAR(20) UNIQUE NOT NULL,
+--    customer_id INT NOT NULL,
+--    balance DECIMAL(15,2) NOT NULL DEFAULT 0,
+--    FOREIGN KEY (customer_id) REFERENCES customer(id) ON DELETE CASCADE
+--);
+--
+---- Create Transactions Table
+--CREATE TABLE IF NOT EXISTS transaction (
+--    id SERIAL PRIMARY KEY,
+--    from_account VARCHAR(20) NOT NULL,
+--    to_account VARCHAR(20) NOT NULL,
+--    amount DECIMAL(15,2) NOT NULL,
+--    status VARCHAR(20) NOT NULL,
+--    failure_reason TEXT,
+--    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+--);
