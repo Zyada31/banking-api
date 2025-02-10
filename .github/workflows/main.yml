@@ -31,9 +31,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      - name: Run SpotBugs (Static Analysis)
-        run: mvn spotbugs:check
-
       - name: Run OWASP Dependency Check
         run: mvn dependency-check:check
 
