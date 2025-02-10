@@ -10,7 +10,7 @@ on:
 
 jobs:
   OWASP Dependency Checks:
-    name: Static Code Analysis
+    name: OWASP Dependency Check
     runs-on: ubuntu-latest
 
     steps:
