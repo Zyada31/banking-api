@@ -5,7 +5,7 @@ Technologies:
 Java 17,    
 Spring Boot,   
 PostgreSQL,   
-Docker, 
+Docker,
 Swagger/OpenAPI,   
 Junit
 Mockito
@@ -28,23 +28,23 @@ How to run the banking API in two ways:
 
 ### Running Locally (Without Docker)
 1. Prerequisites
-   - Before running the app locally, ensure you have:
-   - Java 17 installed (java -version).
-   - Maven installed (mvn -version).
-   - PostgreSQL database installed and running.
-     
+    - Before running the app locally, ensure you have:
+    - Java 17 installed (java -version).
+    - Maven installed (mvn -version).
+    - PostgreSQL database installed and running.
+
 #### Step 1: Set Up PostgreSQL Database
 - PostgreSQL:
-  - if not running already.
-    - `docker run --name postgres -e POSTGRES_USER=bankuser -e POSTGRES_PASSWORD=bankpass -p 5432:5432 -d postgres`  
-    
-    - `docker exec -it {REPLACEMEWITH-CONTAINER-ID} psql -U postgres `
-        
-        - `CREATE DATABASE bankdb;`
+    - if not running already.
+        - `docker run --name postgres -e POSTGRES_USER=bankuser -e POSTGRES_PASSWORD=bankpass -p 5432:5432 -d postgres`
+
+        - `docker exec -it {REPLACEMEWITH-CONTAINER-ID} psql -U postgres `
+
+            - `CREATE DATABASE bankdb;`
   ```
-  
+
 - if already exist.
-  - Update creds in application.yml
+    - Update creds in application.yml
   ```yaml
   datasource:
     url: REPLACEME/bankdb
@@ -75,9 +75,9 @@ Note: Ensure localhost:5432 matches your PostgreSQL configuration.
 #### Step 3: Build & Run the Application
 Run the application using Maven:
 
-`mvn clean spring-boot:run`   
+`mvn clean spring-boot:run`
 
-Your API should now be running at http://localhost:8080 
+Your API should now be running at http://localhost:8080
 
 #### Step 4: Verify Everything Works
 [check APP healthcheck] http://localhost:8080/actuator/health   
@@ -85,7 +85,7 @@ Your API should now be running at http://localhost:8080
 
 
 ## Running with Docker Compose
-System Requirements: 
+System Requirements:
 To run the Banking API and PostgreSQL in Docker, your system should have:
 
 - Docker install and Daemon Running
@@ -116,7 +116,7 @@ Note: You should see two running containers:
 > bank_postgres (PostgreSQL database)
 > bank_app (Spring Boot application)
 ```
-Check API Health : http://localhost:8080/actuator/health 
+Check API Health : http://localhost:8080/actuator/health
 
 If successful, this should return { "status": "UP" }.
 
@@ -163,7 +163,7 @@ POST http://localhost:8080/accounts?customerName=semere&initialDeposit=150&accou
 "timestamp": "2025-02-10T14:53:37.416265972"
 }
 ```
-3. Get account balance 
+3. Get account balance
 ```curl
 http://localhost:8080/accounts/ACC-D7A5E027/balance
 ```
@@ -187,7 +187,7 @@ BODY:
     "amount": 100.00
 }
 ```
-- response 
+- response
 ```json
 {
     "success": true,
@@ -196,11 +196,11 @@ BODY:
     "timestamp": "2025-02-10T15:31:04.633916512"
 }
 ```
-5. Account transaction history 
+5. Account transaction history
 ```curl
 http://localhost:8080/transactions/ACC-1FA62430
 ```
-- Response 
+- Response
 ```json
 {
     "success": true,
@@ -230,24 +230,31 @@ http://localhost:8080/transactions/ACC-1FA62430
 ```
 
 ## App CI/CD Pipeline
-Thi application have gitaction for ci/cd and with jobs of 
-- Job 1: Build & Test (build-and-test)
-         Sets up JDK 17.
+Thi application have gitaction for ci/cd and with jobs of
+- Job 1: OWASP Dependency Check.
+-
+          Checks vulnerabilities in banking-api-knkcnw
+- Job 2: Build & Test (build-and-test)
+
          Caches Maven dependencies for faster builds.
          Builds the project & runs tests.
          Uploads test results as an artifact.
-- Job 2: Build & Push Docker Image (docker)
-         Logs in to Docker Hub (uses GitHub secrets for security).
-         Builds a Docker image from the latest code.
-         Pushes the image to Docker Hub.
-- Job 3: Deploy to Server (deploy)
-         Connects to the production server via SSH.
-         Pulls the latest Docker image.
-         Stops and removes the old container (if running).
-         Runs the new container on port 8080.
+- Job 3: Build & Push Docker Image (docker):
+    - NOTE: need docker hub creds
+
+           Logs in to Docker Hub (uses GitHub secrets for security).
+           Builds a Docker image from the latest code.
+           Pushes the image to Docker Hub.
+- Job 4: Deploy to Server (deploy)->
+    - NOTE: future use once setup servers and depends which env
+
+           Connects to the production server via SSH.
+           Pulls the latest Docker image.
+           Stops and removes the old container (if running).
+           Runs the new container on port 8080.
 
 NOTE: to properly run the actions, need to set Up GitHub Secrets
-Go to 
+Go to
 
 GitHub Repository → Settings → Secrets and Variables → Actions → New Repository Secret and add:
 ```
@@ -257,10 +264,10 @@ SERVER_HOST	: IP address of your production server
 SERVER_USER	: SSH username for your server
 SSH_PRIVATE_KEY	: Private SSH key for server access
 ```
-Running the Pipeline: 
+Running the Pipeline:
 - Automatically runs when push to main branch or pull request is created for main.
 - Manually via github actions.
 
 ### future work
-- Enhance customer info 
+- Enhance customer info
 - Add future/scheduled  transfer functionality 
