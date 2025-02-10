@@ -1,0 +1,34 @@
+# Package Files #
+target/
+*.class
+*.jar
+*.war
+*.log
+*.nar
+*.ear
+*.zip
+*.tar.gz
+
+# Ignore Maven target directory
+/target/
+/out/
+
+# Ignore IDE-specific files
+.idea/
+.idea/vcs.xml
+.idea/.gitignore
+# Log file
+/logs/
+/*.log
+/*.tmp
+
+# idea related
+.idea/
+
+flyway_schema_history
+flywaydb/
+
+/test-output/
+/jacoco/
+coverage/
+*.exec
