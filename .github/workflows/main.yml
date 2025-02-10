@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  Dependency Checks:
+  Dependency-check:
     name: Dependency Check
     runs-on: ubuntu-latest
 
@@ -36,7 +36,7 @@ jobs:
 
   build-and-test:
     name: Build & Test
-    needs: Dependency Check
+    needs: Dependency-check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
