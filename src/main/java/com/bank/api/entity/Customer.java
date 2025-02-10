@@ -22,7 +22,7 @@ public class Customer
     private String name;
 
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference  // Prevents infinite recursion
+    @JsonManagedReference
     private List<BankAccount> accounts = new ArrayList<>();
 
     public void addAccount(BankAccount account)

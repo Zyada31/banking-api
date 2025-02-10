@@ -20,7 +20,6 @@ import static org.mockito.Mockito.*;
 
 class BankAccountServiceTest
 {
-
     @InjectMocks
     private BankAccountServiceImpl bankAccountService;
 
@@ -148,9 +147,8 @@ class BankAccountServiceTest
         assertEquals("Specified bank account does not belong to the given customer", exception.getMessage());
     }
 
-    // get
     @Test
-    void testGetBalancetForNonexistentAccount_SadPath()
+    void testGetBalanceForNonexistentAccount_SadPath()
     {
         String accountNumber = "ACC-99999";
 

@@ -1,0 +1,5 @@
+com/bank/api/integration/AccountIntegrationTest.class
+com/bank/api/unit/service/transaction/TransactionServiceTest.class
+com/bank/api/integration/TransactionIntegrationTest.class
+com/bank/api/integration/TestContainerConfig.class
+com/bank/api/unit/service/bank/BankAccountServiceTest.class

@@ -1,6 +1,7 @@
 package com.bank.api.controller;
 
 import com.bank.api.dto.BankResponse;
+import com.bank.api.dto.TransactionDTO;
 import com.bank.api.entity.Transaction;
 import com.bank.api.service.transaction.TransactionService;
 import org.slf4j.Logger;
@@ -27,10 +28,10 @@ public class TransactionController
      * Transfer amounts between any two accounts, including those owned by different customers.
      */
     @PostMapping("/transfer")
-    public ResponseEntity<BankResponse<String>> transferMoney(@RequestBody Transaction transferRequest)
+    public ResponseEntity<BankResponse<TransactionDTO>> transferMoney(@RequestBody Transaction transferRequest)
     {
-        transactionService.transferMoney(transferRequest);
-        return ResponseEntity.ok(new BankResponse<>(true, "Transfer successful", "Funds transferred successfully"));
+        Transaction transaction = transactionService.transferMoney(transferRequest);
+        return ResponseEntity.ok(new BankResponse<>(true, "Transfer successful", new TransactionDTO(transaction)));
     }
 
     /**

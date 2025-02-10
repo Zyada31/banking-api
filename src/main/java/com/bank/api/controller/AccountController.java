@@ -1,5 +1,6 @@
 package com.bank.api.controller;
 
+import com.bank.api.dto.BankAccountDTO;
 import com.bank.api.dto.BankResponse;
 import com.bank.api.entity.BankAccount;
 import com.bank.api.service.bank.BankAccountService;
@@ -14,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("accounts")
@@ -35,12 +36,13 @@ public class AccountController
      * NOTE: A single customer may have multiple bank accounts.
      */
     @PostMapping
-    public ResponseEntity<BankResponse<BankAccount>> createOrDeposit(@RequestParam String customerName,
-                                                                     @RequestParam BigDecimal initialDeposit,
-                                                                     @RequestParam(required = false) String accountNumber)
+    public ResponseEntity<BankResponse<BankAccountDTO>> createOrDeposit(@RequestParam String customerName,
+                                                                        @RequestParam BigDecimal initialDeposit,
+                                                                        @RequestParam(required = false) String accountNumber)
     {
         BankAccount account = bankAccountService.createAccountOrDeposit(customerName, initialDeposit, accountNumber);
-        return ResponseEntity.ok(new BankResponse<>(true, "Account created or deposit successful", account));
+        return ResponseEntity.ok(new BankResponse<>(true, "Account created or deposit successful",
+                new BankAccountDTO(account)));
     }
 
     /*
@@ -62,18 +64,16 @@ public class AccountController
         }
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<BankAccount> getAccount(@PathVariable Long id)
-    {
-        Optional<BankAccount> account = bankAccountService.getAccountById(id);
-        return account.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
     @GetMapping("/customer/{customerId}")
-    public ResponseEntity<List<BankAccount>> getAccountsByCustomer(@PathVariable Long customerId)
+    public ResponseEntity<BankResponse<List<BankAccountDTO>>> getAccountsByCustomer(@PathVariable Long customerId)
     {
         List<BankAccount> accounts = bankAccountService.getAccountsByCustomerId(customerId);
-        return ResponseEntity.ok(accounts);
+
+        List<BankAccountDTO> accountDTOs = accounts.stream()
+                .map(BankAccountDTO::new)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(new BankResponse<>(true, "Customer Accounts retrieved successfully", accountDTOs));
     }
 
 }

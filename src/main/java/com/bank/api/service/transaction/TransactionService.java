@@ -5,7 +5,7 @@ import java.util.List;
 
 public interface TransactionService
 {
-    void transferMoney(Transaction transferRequest);
+    Transaction transferMoney(Transaction transferRequest);
 
     List<Transaction> getTransactionsByAccount(String accountNumber);
 }

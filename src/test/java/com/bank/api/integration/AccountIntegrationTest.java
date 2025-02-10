@@ -31,7 +31,8 @@ class AccountIntegrationTest extends TestContainerConfig
     private CustomerRepository customerRepository;
 
     @BeforeEach
-    void setup() {
+    void setup()
+    {
         bankAccountRepository.deleteAll();
         customerRepository.deleteAll();
     }

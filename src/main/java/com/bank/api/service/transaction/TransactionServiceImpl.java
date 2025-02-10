@@ -1,6 +1,7 @@
 package com.bank.api.service.transaction;
 
 import com.bank.api.dto.Status;
+import com.bank.api.dto.TransactionDTO;
 import com.bank.api.entity.BankAccount;
 import com.bank.api.entity.Transaction;
 import com.bank.api.exception.BadRequestException;
@@ -38,7 +39,7 @@ public class TransactionServiceImpl implements TransactionService
 
     @Override
     @Transactional
-    public void transferMoney(Transaction transferRequest)
+    public Transaction transferMoney(Transaction transferRequest)
     {
         logger.info("Processing transfer from {} to {} for amount: {}", transferRequest.getFromAccount(),
                 transferRequest.getToAccount(), transferRequest.getAmount());
@@ -91,6 +92,7 @@ public class TransactionServiceImpl implements TransactionService
             logger.info("Transfer successful: {} -> {} | Amount: {}", sender.getAccountNumber(),
                     receiver.getAccountNumber(), transferRequest.getAmount());
 
+            return transaction;
         }
         catch (Exception e)
         {

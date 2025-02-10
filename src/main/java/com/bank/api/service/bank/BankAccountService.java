@@ -12,8 +12,6 @@ public interface BankAccountService
 
     BigDecimal getAccountBalance(String accountNumber);
 
-    Optional<BankAccount> getAccountById(Long id);
-
     List<BankAccount> getAccountsByCustomerId(Long customerId);
 
 }

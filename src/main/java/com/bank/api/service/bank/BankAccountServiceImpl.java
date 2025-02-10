@@ -19,7 +19,6 @@ import java.util.UUID;
 @Service
 public class BankAccountServiceImpl implements BankAccountService
 {
-
     private static final Logger logger = LoggerFactory.getLogger(BankAccountServiceImpl.class);
 
     private final BankAccountRepository accountRepository;
@@ -103,13 +102,6 @@ public class BankAccountServiceImpl implements BankAccountService
 
         BankAccount newAccount = populateAccount(customer, initialDeposit);
         return accountRepository.save(newAccount);
-    }
-
-    @Override
-    public Optional<BankAccount> getAccountById(Long id)
-    {
-        logger.info("Fetching account details for accountId: {}", id);
-        return accountRepository.findById(id);
     }
 
     @Override

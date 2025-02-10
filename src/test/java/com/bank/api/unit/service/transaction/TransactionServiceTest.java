@@ -24,7 +24,6 @@ import static org.mockito.Mockito.*;
 
 class TransactionServiceTest
 {
-
     @InjectMocks
     private TransactionServiceImpl transactionService;
 
@@ -100,7 +99,6 @@ class TransactionServiceTest
         Exception exception = assertThrows(RuntimeException.class, () -> transactionService.transferMoney(transferRequest));
 
         assertEquals("Transfer amount must be greater than zero.", exception.getMessage());
-
     }
 
     @Test
@@ -175,7 +173,6 @@ class TransactionServiceTest
         Exception exception = assertThrows(RuntimeException.class, () -> transactionService.transferMoney(transferRequest));
 
         assertEquals("Sender account ACC-123 not found.", exception.getMessage());
-
     }
 
     @Test
