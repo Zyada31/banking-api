@@ -9,8 +9,8 @@ on:
       - main
 
 jobs:
-  OWASP Dependency Checks:
-    name: OWASP Dependency Check
+  Dependency Checks:
+    name: Dependency Check
     runs-on: ubuntu-latest
 
     steps:
@@ -36,7 +36,7 @@ jobs:
 
   build-and-test:
     name: Build & Test
-    needs: OWASP Dependency Check
+    needs: Dependency Check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
