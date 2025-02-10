@@ -1,50 +1,69 @@
-# Developer Documentation
-Version: 1.0
+# Banking api documentation
 
-Technologies:  
-Java 17,    
-Spring Boot,   
-PostgreSQL,   
-Docker,
-Swagger/OpenAPI,   
-Junit
-Mockito
+## Purpose
+The banking api is design to provide banking operations for bank employees. such as
+- Creation of customer accounts and deposit initial above the lower limit amount.
+- Transfer money between customer accounts and different customers.
+- Retrieval of account balances.
+- Transaction history tracking.
 
-Purpose: Provides banking operations for bank employees. such as account creation, money transfers, and transaction history retrieval.
+Built using Java 17, Spring boot, PostgresDB, and docker.
+
+## Design
+#### Overview
+The Banking APi follows Layer approach
+- Controller layer - handles Rest api requests for both transaction and account.
+- Service layer - contains business logic.
+- Repository layer - manages db interface using JPA.
+- Database layer - uses Postgress with flyway for schema.
+
+#### Technology used
+- Java 17, Spring boot, data jpa, flyway
+- Database: Postgres
+- Testing: Junit 5, Mockito and testContainers
+- CI/CD: Github actions, Docker and mvn
+- dependency check: OWASP
+
+#### Relationship Diagram
+
+` Customer (1) ----> (M) BankAccount (1) ----> (M) Transaction `
+Customer - Can have single/multiple bank accounts.
+BankAccount - Belongs to one customer, can have multiple transactions.
+Transaction - Records deposits and transfers (Captures success/fail transactions for tracking along with fail reasons).
+
+
 
 Prerequisites:  
 Before running the application, ensure the following are installed:
 
-Requirement	Check Command   
-Java 17  
-Maver	    
-Docker Compose
+- Java 17
+- postgress
+- Maven
+- Docker Compose
 
 ## Developer Notes: How to Run the Banking API
-How to run the banking API in two ways:
+Two ways to run this application:
 
 1. Running Locally (without Docker, using mvn spring-boot:run).
 2. Running with Docker Compose (database + application in containers).
 
 ### Running Locally (Without Docker)
-1. Prerequisites
-    - Before running the app locally, ensure you have:
-    - Java 17 installed (java -version).
-    - Maven installed (mvn -version).
-    - PostgreSQL database installed and running.
-
-#### Step 1: Set Up PostgreSQL Database
-- PostgreSQL:
-    - if not running already.
-        - `docker run --name postgres -e POSTGRES_USER=bankuser -e POSTGRES_PASSWORD=bankpass -p 5432:5432 -d postgres`
-
-        - `docker exec -it {REPLACEMEWITH-CONTAINER-ID} psql -U postgres `
-
-            - `CREATE DATABASE bankdb;`
+Set Up PostgreSQL Database
+- if not running already.
+  ```shell
+      - `docker run --name postgres -e POSTGRES_USER=bankuser -e POSTGRES_PASSWORD=bankpass -p 5432:5432 -d postgres`  
+      
+      - `docker exec -it {REPLACEMEWITH-CONTAINER-ID} psql -U postgres `
+          
+          - `CREATE DATABASE bankdb;`
   ```
-
-- if already exist.
-    - Update creds in application.yml
+- if otherwise
+  ```roomsql
+  CREATE DATABASE bankdb;
+  CREATE USER bankuser WITH PASSWORD 'bankpass';
+  GRANT ALL PRIVILEGES ON DATABASE bankdb TO bankuser;
+  ```
+- Configure application.yml
   ```yaml
   datasource:
     url: REPLACEME/bankdb
@@ -60,69 +79,116 @@ How to run the banking API in two ways:
     password: REPLACEME
     ...
     ```
-
-#### Step 2: Configure application.properties (Optional)
-- If your PostgreSQL setup is different, update src/main/resources/application.properties:
-    ```yaml
-    spring.datasource.url=jdbc:postgresql://localhost:5432/bankdb
-    spring.datasource.username=bankuser
-    spring.datasource.password=bankpass
-    spring.jpa.hibernate.ddl-auto=update
-    ```
-
-Note: Ensure localhost:5432 matches your PostgreSQL configuration.
-
-#### Step 3: Build & Run the Application
-Run the application using Maven:
-
-`mvn clean spring-boot:run`
-
+- Run unit, integration and dependency check:
+  ```shell
+  mvn clean verify dependency-check:check
+  ```
+- Build and run the application:
+  ```shell
+  mvn clean spring-boot:run
+  ```
+NOTE:
 Your API should now be running at http://localhost:8080
 
-#### Step 4: Verify Everything Works
-[check APP healthcheck] http://localhost:8080/actuator/health   
-[check APP spec] http://localhost:8080/swagger-ui.html
+- Verify Everything Works
+    - [check APP healthcheck] http://localhost:8080/actuator/health
+      response:
+  ```json
+    // http://localhost:8080/actuator/health
+    {
+    "status": "UP"
+    }
+    ```
+- API Documentation (Swagger)
+    - Swagger UI: http://localhost:8080/swagger-ui.html
+    - OpenAPI JSON: http://localhost:8080/v3/api-docs
 
 
-## Running with Docker Compose
-System Requirements:
-To run the Banking API and PostgreSQL in Docker, your system should have:
+### Running with Docker Compose
+NOTE:
+To run the Banking API and PostgreSQL in Docker, your system should have: Docker install and Daemon Running
 
-- Docker install and Daemon Running
-
-#### Step 1: Build the Application
-First, build the Spring Boot JAR file:
+- Build the Application
 
 `mvn clean package`
 
 This will generate a JAR file inside target/.
 
-#### Step 2: Start Everything Using Docker Compose
-Run the following command to start PostgreSQL and the Spring Boot app:
+- Run with  Docker Compose
 
-`docker-compose up --build`
+```shell 
+docker-compose up --build
+```
+
 This will:
 
 1. Start a PostgreSQL container (bank_postgres).
 2. Build and run the Spring Boot app container (bank_app).
 3. Automatically connect Spring Boot to the database.
 
-#### Step 3: Verify That Everything is Running
-Check Running Containers
-
-`docker ps`
+- Verify That Everything is Running
+  Check Running Containers
+```shell
+docker ps
+```
 Note: You should see two running containers:
 ```shell
 > bank_postgres (PostgreSQL database)
 > bank_app (Spring Boot application)
+``` 
+- Verify Everything Works
+    - [check APP healthcheck] http://localhost:8080/actuator/health
+      response:
+  ```json
+    // http://localhost:8080/actuator/health
+    {
+    "status": "UP"
+    }
+    ```
+- API Documentation (Swagger)
+    - Swagger UI: http://localhost:8080/swagger-ui.html
+    - OpenAPI JSON: http://localhost:8080/v3/api-docs
+
+
+- Stopping the Application:
+    ```shell
+    docker-compose down
+    ```
+
+### App CI/CD Pipeline setup and triggered
+Thi application have github action for ci/cd and with jobs of
+- Job 1: Dependency-Check.
+    - Checks vulnerabilities in banking-api-knkcnw using OWASP
+- Job 2: build-and-test
+    - Builds the project & runs unit and integration tests.
+    - Uploads test results as an artifact.
+    - Build/package application
+
+- Job 3: Build & Push Docker Image (docker):
+    - NOTE: Build will fail at this stage due to docker hub creds
+        - Logs in to Docker Hub (uses GitHub secrets for security).
+        - Builds a Docker image from the latest code.
+        - publish the image to Docker Hub.
+- Job 4: Deploy to Server (deploy)->
+    - NOTE: future use once prod env is setup, this stage will deploy
+        - Connects to the production server via SSH.
+        - Pulls the latest Docker image.
+        - Runs the new container.
+
+NOTE: to properly run the actions, need to set Up GitHub Secrets
+Go to
+
+GitHub Repository → Settings → Secrets and Variables → Actions → New Repository Secret and add:
 ```
-Check API Health : http://localhost:8080/actuator/health
-
-If successful, this should return { "status": "UP" }.
-
-#### Step 4: Stopping the Application
-To stop the application:
-`docker-compose down`
+DOCKER_USERNAME	: Your Docker Hub username
+DOCKER_PASSWORD	: Your Docker Hub password
+SERVER_HOST	: IP address of your production server
+SERVER_USER	: SSH username for your server
+SSH_PRIVATE_KEY	: Private SSH key for server access
+```
+Running the Pipeline:
+- Automatically runs when push to main branch or pull request is created for main.
+- Manually via github actions.
 
 ### Manual test cases: Example API Requests
 Note: use/import bank-api.postman_collection.json
@@ -229,45 +295,8 @@ http://localhost:8080/transactions/ACC-1FA62430
 }
 ```
 
-## App CI/CD Pipeline
-Thi application have gitaction for ci/cd and with jobs of
-- Job 1: OWASP Dependency Check.
--
-          Checks vulnerabilities in banking-api-knkcnw
-- Job 2: Build & Test (build-and-test)
-
-         Caches Maven dependencies for faster builds.
-         Builds the project & runs tests.
-         Uploads test results as an artifact.
-- Job 3: Build & Push Docker Image (docker):
-    - NOTE: need docker hub creds
-
-           Logs in to Docker Hub (uses GitHub secrets for security).
-           Builds a Docker image from the latest code.
-           Pushes the image to Docker Hub.
-- Job 4: Deploy to Server (deploy)->
-    - NOTE: future use once setup servers and depends which env
-
-           Connects to the production server via SSH.
-           Pulls the latest Docker image.
-           Stops and removes the old container (if running).
-           Runs the new container on port 8080.
-
-NOTE: to properly run the actions, need to set Up GitHub Secrets
-Go to
-
-GitHub Repository → Settings → Secrets and Variables → Actions → New Repository Secret and add:
-```
-DOCKER_USERNAME	: Your Docker Hub username
-DOCKER_PASSWORD	: Your Docker Hub password
-SERVER_HOST	: IP address of your production server
-SERVER_USER	: SSH username for your server
-SSH_PRIVATE_KEY	: Private SSH key for server access
-```
-Running the Pipeline:
-- Automatically runs when push to main branch or pull request is created for main.
-- Manually via github actions.
-
 ### future work
 - Enhance customer info
-- Add future/scheduled  transfer functionality 
+- Add future/scheduled transfer functionality
+- Authentication & Role-based Access Control.
+- Monitoring
