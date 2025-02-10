@@ -27,11 +27,11 @@ The Banking APi follows Layer approach
 #### Relationship Diagram
 
 ` Customer (1) ----> (M) BankAccount (1) ----> (M) Transaction `
-Customer - Can have single/multiple bank accounts.
-BankAccount - Belongs to one customer, can have multiple transactions.
-Transaction - Records deposits and transfers (Captures success/fail transactions for tracking along with fail reasons).
 
-
+- Customer - Can have single/multiple bank accounts.
+- BankAccount - Belongs to one customer, can have multiple transactions.
+- Transaction - Records deposits and transfers.
+    - Captures success/fail transactions for tracking along with fail reasons.
 
 Prerequisites:  
 Before running the application, ensure the following are installed:
@@ -111,8 +111,6 @@ To run the Banking API and PostgreSQL in Docker, your system should have: Docker
 - Build the Application
 
 `mvn clean package`
-
-This will generate a JAR file inside target/.
 
 - Run with  Docker Compose
 
