@@ -18,6 +18,7 @@ import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -234,9 +235,9 @@ class TransactionServiceTest
         verify(transactionRepository, times(1)).save(any(Transaction.class));
 
         List<Transaction> mockTransactionHistory = List.of(
-                new Transaction(fromAccountNumber, toAccountNumber, transferAmount, Status.SUCCESS, null),
-                new Transaction(fromAccountNumber, "ACC-789", new BigDecimal("50"), Status.FAILED, null),
-                new Transaction("ACC-000", fromAccountNumber, new BigDecimal("30"), Status.SUCCESS, null)
+                new Transaction(fromAccountNumber, toAccountNumber, transferAmount, Status.SUCCESS, null, UUID.randomUUID().toString()),
+                new Transaction(fromAccountNumber, "ACC-789", new BigDecimal("50"), Status.FAILED, null, UUID.randomUUID().toString()),
+                new Transaction("ACC-000", fromAccountNumber, new BigDecimal("30"), Status.SUCCESS, null, UUID.randomUUID().toString())
         );
 
         when(transactionRepository.findByFromAccountOrToAccount(fromAccountNumber, fromAccountNumber))

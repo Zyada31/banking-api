@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class TransactionServiceImpl implements TransactionService
@@ -44,6 +45,7 @@ public class TransactionServiceImpl implements TransactionService
         logger.info("Processing transfer from {} to {} for amount: {}", transferRequest.getFromAccount(),
                 transferRequest.getToAccount(), transferRequest.getAmount());
 
+        transferRequest.setTransactionId(UUID.randomUUID().toString());
         try {
             if (transferRequest.getAmount().compareTo(BigDecimal.ZERO) <= 0)
             {
@@ -55,14 +57,18 @@ public class TransactionServiceImpl implements TransactionService
                 throw new BadRequestException("Cannot transfer money to the same account.");
             }
 
-            BankAccount sender = accountRepository.findByAccountNumber(transferRequest.getFromAccount())
+            BankAccount sender = accountRepository.findByAccountNumberForUpdate(transferRequest.getFromAccount())
                     .orElseThrow(() -> {
                         String msg = String.format("Sender account %s not found.", transferRequest.getFromAccount());
                         logger.error(msg);
                         return new ResourceNotFoundException(msg);
                     });
 
-            BankAccount receiver = accountRepository.findByAccountNumber(transferRequest.getToAccount())
+            if (sender.isDeleted()) {
+                throw new BadRequestException("Transfers are not allowed from a deleted account.");
+            }
+
+            BankAccount receiver = accountRepository.findByAccountNumberForUpdate(transferRequest.getToAccount())
                     .orElseThrow(() -> {
                         String msg = String.format("Receiver account %s not found.", transferRequest.getToAccount());
                         logger.error(msg);
@@ -84,7 +90,7 @@ public class TransactionServiceImpl implements TransactionService
 
             Transaction transaction = new Transaction(
                     sender.getAccountNumber(), receiver.getAccountNumber(),
-                    transferRequest.getAmount(), Status.SUCCESS, null
+                    transferRequest.getAmount(), Status.SUCCESS, null, transferRequest.getTransactionId()
             );
 
             transactionRepository.save(transaction);
@@ -98,9 +104,8 @@ public class TransactionServiceImpl implements TransactionService
         {
             logger.error("Transfer failed: {} -> {} | Amount: {} | Reason: {}", transferRequest.getFromAccount(),
                     transferRequest.getToAccount(), transferRequest.getAmount(), e.getMessage());
-
-            transactionLoggerService.logFailedTransaction(transferRequest.getFromAccount(), transferRequest.getToAccount(),
-                    transferRequest.getAmount(), e.getMessage());
+            transferRequest.setFailureReason(e.getMessage());
+            transactionLoggerService.logFailedTransaction(transferRequest);
 
             throw e;
         }

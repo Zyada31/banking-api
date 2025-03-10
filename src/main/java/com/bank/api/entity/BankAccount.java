@@ -3,14 +3,20 @@ package com.bank.api.entity;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Table(
+        name = "bank_accounts",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"customer_id", "account_number"})
+)
 public class BankAccount
 {
     @Id
@@ -27,6 +33,26 @@ public class BankAccount
 
     @Column(nullable = false, precision = 15, scale = 2)
     private BigDecimal balance = BigDecimal.ZERO;
+
+    @Column(name = "deleted_at", nullable = true)
+    private LocalDateTime deletedAt;
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Version
+    private Long version;
+
+    public void softDelete()
+    {
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    public boolean isDeleted()
+    {
+        return deletedAt != null;
+    }
 
     public void deposit(BigDecimal amount)
     {

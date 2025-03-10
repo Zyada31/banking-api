@@ -1,8 +1,11 @@
 /Users/semereghebrechristos/Documents/banking-api/src/main/java/com/bank/api/BankApiApplication.java
 /Users/semereghebrechristos/Documents/banking-api/src/main/java/com/bank/api/controller/AccountController.java
 /Users/semereghebrechristos/Documents/banking-api/src/main/java/com/bank/api/controller/TransactionController.java
+/Users/semereghebrechristos/Documents/banking-api/src/main/java/com/bank/api/dto/BankAccountDTO.java
 /Users/semereghebrechristos/Documents/banking-api/src/main/java/com/bank/api/dto/BankResponse.java
+/Users/semereghebrechristos/Documents/banking-api/src/main/java/com/bank/api/dto/CustomerDTO.java
 /Users/semereghebrechristos/Documents/banking-api/src/main/java/com/bank/api/dto/Status.java
+/Users/semereghebrechristos/Documents/banking-api/src/main/java/com/bank/api/dto/TransactionDTO.java
 /Users/semereghebrechristos/Documents/banking-api/src/main/java/com/bank/api/entity/BankAccount.java
 /Users/semereghebrechristos/Documents/banking-api/src/main/java/com/bank/api/entity/Customer.java
 /Users/semereghebrechristos/Documents/banking-api/src/main/java/com/bank/api/entity/Transaction.java

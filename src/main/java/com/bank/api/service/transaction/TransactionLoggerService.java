@@ -1,6 +1,6 @@
 package com.bank.api.service.transaction;
 
-import com.bank.api.dto.Status;
+
 import com.bank.api.entity.Transaction;
 import com.bank.api.repository.TransactionRepository;
 import org.slf4j.Logger;
@@ -25,13 +25,13 @@ public class TransactionLoggerService
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void logFailedTransaction(String fromAccount, String toAccount, BigDecimal amount, String failureReason)
+    public void logFailedTransaction(Transaction transaction)
     {
         try
         {
-            Transaction failedTransaction = new Transaction(fromAccount, toAccount, amount, Status.FAILED, failureReason);
+            Transaction failedTransaction = transaction;
             transactionRepository.save(failedTransaction);
-            logger.info("Failed transaction logged: {} -> {} | Amount: {} | Reason: {}", fromAccount, toAccount, amount, failureReason);
+            logger.info("Failed transaction logged: {} -> {} | Amount: {} | Reason: {}", transaction);
         }
         catch (Exception e)
         {

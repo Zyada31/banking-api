@@ -46,6 +46,24 @@ public class AccountController
     }
 
     /*
+     * soft delete account, will flag an account with deleted flag
+     * */
+    @DeleteMapping("/{accountNumber}")
+    public ResponseEntity<BankResponse<BankAccountDTO>> deleteByAccountNumber(@PathVariable String accountNumber) {
+        BankAccountDTO bankAccountDTO = bankAccountService.deleteByAccountNumber(accountNumber);
+        return ResponseEntity.ok(new BankResponse<>(true, "Account soft deleted", bankAccountDTO));
+    }
+
+    /*
+     * Restore account, deleted flag set back to false
+     * */
+    @PostMapping("/{accountNumber}/restore")
+    public ResponseEntity<BankResponse<BankAccountDTO>> restoreAccount(@PathVariable String accountNumber) {
+        BankAccountDTO bankAccountDTO = bankAccountService.restoreAccount(accountNumber);
+        return ResponseEntity.ok(new BankResponse<>(true, "Account restored successfully", bankAccountDTO));
+    }
+
+    /*
      * Retrieve balances for a given account.
      */
     @GetMapping("/{accountNumber}/balance")

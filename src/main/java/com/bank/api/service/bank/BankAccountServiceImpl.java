@@ -1,5 +1,6 @@
 package com.bank.api.service.bank;
 
+import com.bank.api.dto.BankAccountDTO;
 import com.bank.api.entity.BankAccount;
 import com.bank.api.entity.Customer;
 import com.bank.api.exception.BadRequestException;
@@ -43,12 +44,14 @@ public class BankAccountServiceImpl implements BankAccountService
         logger.info("Processing deposit for customer: {} with amount: {}, specified account: {}",
                 customerName, initialDeposit, accountNumber);
 
+        // check deposit amount
         if (initialDeposit.compareTo(BigDecimal.valueOf(50)) < 0)
         {
             logger.error("Initial deposit {} is below the minimum required ($50)", initialDeposit);
             throw new BadRequestException("Minimum deposit amount is $50");
         }
 
+        //ensuring customer exists before assigning accounts.
         Customer customer = customerRepository.findByName(customerName)
                 .orElseGet(() -> {
                     logger.info("Customer '{}' not found. Creating new customer.", customerName);
@@ -59,8 +62,9 @@ public class BankAccountServiceImpl implements BankAccountService
 
         if (accountNumber != null && !accountNumber.isEmpty())
         {
-            Optional<BankAccount> existingAccount = accountRepository.findByAccountNumber(accountNumber);
 
+            Optional<BankAccount> existingAccount = accountRepository.findByAccountNumber(accountNumber);
+//            prevents multiple customers from using the same account.
             if (existingAccount.isPresent())
             {
                 if (!existingAccount.get().getCustomer().getId().equals(customer.getId()))
@@ -122,6 +126,37 @@ public class BankAccountServiceImpl implements BankAccountService
                     logger.error("Account number {} not found", accountNumber);
                     return new RuntimeException("Bank account not found");
                 });
+    }
+
+    @Transactional
+    @Override
+    public BankAccountDTO deleteByAccountNumber(String accountNumber) {
+        return accountRepository.findByAccountNumber(accountNumber)
+                .map(account -> {
+                    if (account.getBalance().compareTo(BigDecimal.ZERO) > 0) {
+                        throw new BadRequestException("Cannot delete an account with a positive balance.");
+                    }
+                    account.softDelete();
+                    accountRepository.save(account);
+                    return new BankAccountDTO(account);
+                })
+                .orElseThrow(() -> new ResourceNotFoundException("Active account not found: " + accountNumber));
+    }
+
+    @Transactional
+    @Override
+    public BankAccountDTO restoreAccount(String accountNumber) {
+        return accountRepository.findByAccountNumber(accountNumber)
+                .map(account -> {
+                    if (account.isDeleted()) {
+                        account.setDeletedAt(null);
+                        accountRepository.save(account);
+                        return new BankAccountDTO(account);
+                    } else {
+                        throw new BadRequestException("Account is already active.");
+                    }
+                })
+                .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
     }
 
     private BankAccount populateAccount(Customer customer, BigDecimal initialDeposit)

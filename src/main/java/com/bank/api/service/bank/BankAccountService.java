@@ -1,6 +1,8 @@
 package com.bank.api.service.bank;
 
+import com.bank.api.dto.BankAccountDTO;
 import com.bank.api.entity.BankAccount;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -14,4 +16,7 @@ public interface BankAccountService
 
     List<BankAccount> getAccountsByCustomerId(Long customerId);
 
+    BankAccountDTO deleteByAccountNumber(String account);
+
+    BankAccountDTO restoreAccount(String accountNumber);
 }
