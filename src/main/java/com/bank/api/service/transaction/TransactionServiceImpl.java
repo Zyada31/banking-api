@@ -1,15 +1,17 @@
 package com.bank.api.service.transaction;
 
+import com.bank.api.dto.rerquest.TransactionRequest;
+import com.bank.api.dto.response.BankResponse;
 import com.bank.api.dto.Status;
-import com.bank.api.dto.TransactionDTO;
+import com.bank.api.dto.response.TransactionDTO;
 import com.bank.api.entity.BankAccount;
+import com.bank.api.entity.PendingTransaction;
 import com.bank.api.entity.Transaction;
-import com.bank.api.exception.BadRequestException;
-import com.bank.api.exception.InsufficientFundsException;
-import com.bank.api.exception.ResourceNotFoundException;
-import com.bank.api.exception.TransactionExceptions;
+import com.bank.api.exception.*;
 import com.bank.api.repository.BankAccountRepository;
+import com.bank.api.repository.PendingTransactionRepository;
 import com.bank.api.repository.TransactionRepository;
+import com.bank.api.service.otp.OtpService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,8 +19,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 @Service
 public class TransactionServiceImpl implements TransactionService
@@ -28,100 +35,74 @@ public class TransactionServiceImpl implements TransactionService
     private final BankAccountRepository accountRepository;
     private final TransactionRepository transactionRepository;
     private final TransactionLoggerService transactionLoggerService;
+    private final PendingTransactionRepository pendingTransactionRepository;
+    private final OtpService otpService;
 
     @Autowired
-    public TransactionServiceImpl(BankAccountRepository accountRepository, TransactionRepository transactionRepository,
-                                  TransactionLoggerService transactionLoggerService)
+    public TransactionServiceImpl(BankAccountRepository accountRepository,
+                                  TransactionRepository transactionRepository,
+                                  TransactionLoggerService transactionLoggerService,
+                                  PendingTransactionRepository pendingTransactionRepository,
+                                  OtpService otpService)
     {
         this.accountRepository = accountRepository;
         this.transactionRepository = transactionRepository;
         this.transactionLoggerService = transactionLoggerService;
+        this.pendingTransactionRepository = pendingTransactionRepository;
+        this.otpService = otpService;
     }
 
-    @Override
+    /**
+     * Initiates a money transfer.
+     * If the amount is >= $10,000, requires OTP verification.
+     */
     @Transactional
-    public Transaction transferMoney(Transaction transferRequest)
+    @Override
+    public BankResponse<?> transferMoney(TransactionRequest request)
     {
-        logger.info("Processing transfer from {} to {} for amount: {}", transferRequest.getFromAccount(),
-                transferRequest.getToAccount(), transferRequest.getAmount());
+        logger.info("Processing transfer request: From={} To={} Amount={}",
+                request.getFromAccount(), request.getToAccount(), request.getAmount());
 
-        transferRequest.setTransactionId(UUID.randomUUID().toString());
-        try {
-            if (transferRequest.getAmount().compareTo(BigDecimal.ZERO) <= 0)
+        validateTransactionRequest(request);
+
+        if (request.getTransactionId() == null || request.getTransactionId().isEmpty())
+        {
+            request.setTransactionId(UUID.randomUUID().toString());
+        }
+
+        try
+        {
+            if (request.getAmount().compareTo(BigDecimal.valueOf(10000)) >= 0)
             {
-                throw new BadRequestException("Transfer amount must be greater than zero.");
+                return handleOtpTransaction(request);
             }
 
-            if (transferRequest.getFromAccount().equals(transferRequest.getToAccount()))
-            {
-                throw new BadRequestException("Cannot transfer money to the same account.");
-            }
+            Transaction transaction = executeTransfer(request.getFromAccount(), request.getToAccount(), request.getAmount());
 
-            BankAccount sender = accountRepository.findByAccountNumberForUpdate(transferRequest.getFromAccount())
-                    .orElseThrow(() -> {
-                        String msg = String.format("Sender account %s not found.", transferRequest.getFromAccount());
-                        logger.error(msg);
-                        return new ResourceNotFoundException(msg);
-                    });
+            transactionLoggerService.logTransaction(transaction);
 
-            if (sender.isDeleted()) {
-                throw new BadRequestException("Transfers are not allowed from a deleted account.");
-            }
-
-            BankAccount receiver = accountRepository.findByAccountNumberForUpdate(transferRequest.getToAccount())
-                    .orElseThrow(() -> {
-                        String msg = String.format("Receiver account %s not found.", transferRequest.getToAccount());
-                        logger.error(msg);
-                        return new ResourceNotFoundException(msg);
-                    });
-
-            if (sender.getBalance().compareTo(transferRequest.getAmount()) < 0)
-            {
-                String message = "Insufficient funds in sender's account.";
-                logger.error(message);
-                throw new InsufficientFundsException(message, sender.getBalance());
-            }
-
-            sender.setBalance(sender.getBalance().subtract(transferRequest.getAmount()));
-            receiver.setBalance(receiver.getBalance().add(transferRequest.getAmount()));
-
-            accountRepository.save(sender);
-            accountRepository.save(receiver);
-
-            Transaction transaction = new Transaction(
-                    sender.getAccountNumber(), receiver.getAccountNumber(),
-                    transferRequest.getAmount(), Status.SUCCESS, null, transferRequest.getTransactionId()
-            );
-
-            transactionRepository.save(transaction);
-
-            logger.info("Transfer successful: {} -> {} | Amount: {}", sender.getAccountNumber(),
-                    receiver.getAccountNumber(), transferRequest.getAmount());
-
-            return transaction;
+            return new BankResponse<>(true, "Transfer successful", new TransactionDTO(transaction));
         }
         catch (Exception e)
         {
-            logger.error("Transfer failed: {} -> {} | Amount: {} | Reason: {}", transferRequest.getFromAccount(),
-                    transferRequest.getToAccount(), transferRequest.getAmount(), e.getMessage());
-            transferRequest.setFailureReason(e.getMessage());
-            transactionLoggerService.logFailedTransaction(transferRequest);
+            logger.error("Transfer failed: {} -> {} | Amount: {} | Reason: {}",
+                    request.getFromAccount(), request.getToAccount(), request.getAmount(), e.getMessage());
 
-            throw e;
+            transactionLoggerService.logFailedTransaction(request, e.getMessage());
+
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+
+            throw new RuntimeException("Transaction failed due to: " + e.getMessage(), e);
         }
     }
 
+    /**
+     * Fetches transaction history for a specific account.
+     */
     @Override
     public List<Transaction> getTransactionsByAccount(String accountNumber)
     {
         logger.info("Fetching transaction history for account: {}", accountNumber);
-        boolean accountExists = accountRepository.findByAccountNumber(accountNumber).isPresent();
-        if (!accountExists)
-        {
-            logger.error("Transaction retrieval failed: Account number {} does not exist.", accountNumber);
-            throw new RuntimeException("Account number does not exist: " + accountNumber);
-        }
-
         List<Transaction> transactions = transactionRepository.findByFromAccountOrToAccount(accountNumber, accountNumber);
 
         if (transactions.isEmpty())
@@ -133,4 +114,112 @@ public class TransactionServiceImpl implements TransactionService
         return transactions;
     }
 
+    /**
+     * Validates OTP and processes a pending transaction.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Override
+    public Transaction processTransaction(String transactionId)
+    {
+        PendingTransaction pendingTransaction = pendingTransactionRepository.findByTransactionId(transactionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Transaction not found"));
+
+        try
+        {
+            Transaction completedTransaction = executeTransfer(
+                    pendingTransaction.getFromAccount(),
+                    pendingTransaction.getToAccount(),
+                    pendingTransaction.getAmount());
+
+            pendingTransactionRepository.delete(pendingTransaction);
+            transactionLoggerService.logTransaction(completedTransaction);
+            return completedTransaction;
+        }
+        catch (Exception e)
+        {
+            logger.error("Transaction processing failed: {} | Reason: {}", transactionId, e.getMessage());
+
+            transactionLoggerService.logFailedTransaction(pendingTransaction, e.getMessage());
+
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+
+            throw new RuntimeException("Transaction processing failed due to: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Handles transactions that require OTP.
+     */
+    private BankResponse<?> handleOtpTransaction(TransactionRequest request)
+    {
+        pendingTransactionRepository.save(new PendingTransaction(
+                request.getTransactionId(),
+                request.getFromAccount(),
+                request.getToAccount(),
+                request.getAmount(),
+                LocalDateTime.now()));
+
+//        String otpId = otpService.generateOtp(request.getTransactionId());
+        otpService.generateAndSendOtp(request.getTransactionId(), "SE@se.com", "12345678");
+
+        logger.info("OTP required. Transaction ID: {}", request.getTransactionId());
+
+        return new BankResponse<>(true, "OTP required for transaction verification",
+                Map.of("transactionId", request.getTransactionId()));
+    }
+
+    /**
+     * Executes a direct fund transfer.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    private Transaction executeTransfer(String fromAccount, String toAccount, BigDecimal amount)
+    {
+        BankAccount sender = accountRepository.findByAccountNumberForUpdate(fromAccount)
+                .orElseThrow(() -> new BadRequestException("Sender account not found"));
+
+        BankAccount receiver = accountRepository.findByAccountNumberForUpdate(toAccount)
+                .orElseThrow(() -> new BadRequestException("Receiver account not found"));
+
+        if (sender.getBalance().compareTo(amount) < 0)
+        {
+            throw new InsufficientFundsException("Insufficient funds.", sender.getBalance());
+        }
+
+        // Fetch latest versions to prevent stale reads
+        sender = accountRepository.findById(sender.getId()).orElseThrow();
+        receiver = accountRepository.findById(receiver.getId()).orElseThrow();
+
+        sender.setBalance(sender.getBalance().subtract(amount));
+        receiver.setBalance(receiver.getBalance().add(amount));
+
+        accountRepository.save(sender);
+        accountRepository.save(receiver);
+
+        Transaction transaction = new Transaction(fromAccount, toAccount, amount, Status.SUCCESS, null, UUID.randomUUID().toString());
+
+        return transactionRepository.save(transaction);
+    }
+
+    /**
+     * Validates transaction request.
+     */
+    private void validateTransactionRequest(TransactionRequest request)
+    {
+        if (request.getAmount() == null || request.getAmount().compareTo(BigDecimal.ZERO) <= 0)
+        {
+            throw new BadRequestException("Transfer amount must be greater than zero.");
+        }
+        if (request.getFromAccount().equals(request.getToAccount()))
+        {
+            throw new BadRequestException("Cannot transfer money to the same account.");
+        }
+        if (!accountRepository.existsByAccountNumber(request.getFromAccount()))
+        {
+            throw new ResourceNotFoundException("Sender account not found: " + request.getFromAccount());
+        }
+        if (!accountRepository.existsByAccountNumber(request.getToAccount()))
+        {
+            throw new ResourceNotFoundException("Receiver account not found: " + request.getToAccount());
+        }
+    }
 }

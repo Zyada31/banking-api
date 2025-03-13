@@ -1,4 +1,4 @@
-package com.bank.api.dto;
+package com.bank.api.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

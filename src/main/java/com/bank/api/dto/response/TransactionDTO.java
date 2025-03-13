@@ -1,4 +1,4 @@
-package com.bank.api.dto;
+package com.bank.api.dto.response;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -18,6 +18,7 @@ public class TransactionDTO
     private String failureReason;
     private String status;
     private LocalDateTime timestamp;
+    private String transactionId; // Optional - Will be generated if missing
 
     public TransactionDTO(Transaction transaction)
     {
@@ -28,5 +29,6 @@ public class TransactionDTO
         this.failureReason = transaction.getFailureReason();
         this.status = transaction.getStatus().name();
         this.timestamp = transaction.getTimestamp();
+        this.transactionId = transaction.getTransactionId();
     }
 }

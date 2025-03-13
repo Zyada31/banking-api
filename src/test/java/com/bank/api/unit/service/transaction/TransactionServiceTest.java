@@ -1,11 +1,14 @@
 package com.bank.api.unit.service.transaction;
 
 import com.bank.api.dto.Status;
+import com.bank.api.dto.rerquest.TransactionRequest;
 import com.bank.api.entity.BankAccount;
 import com.bank.api.entity.Transaction;
 import com.bank.api.exception.TransactionExceptions;
 import com.bank.api.repository.BankAccountRepository;
+import com.bank.api.repository.PendingTransactionRepository;
 import com.bank.api.repository.TransactionRepository;
+import com.bank.api.service.otp.OtpService;
 import com.bank.api.service.transaction.TransactionLoggerService;
 import com.bank.api.service.transaction.TransactionServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,11 +40,18 @@ class TransactionServiceTest
     @Mock
     private TransactionLoggerService transactionLoggerService;
 
+    @Mock
+    private PendingTransactionRepository pendingTransactionRepository;
+
+    TransactionRequest transferRequest;
+
     @BeforeEach
     void setUp()
     {
+        transferRequest = new TransactionRequest();
+
         MockitoAnnotations.openMocks(this);
-        transactionService = new TransactionServiceImpl(accountRepository, transactionRepository, transactionLoggerService);
+        transactionService = new TransactionServiceImpl(accountRepository, transactionRepository, transactionLoggerService, pendingTransactionRepository, null);
     }
 
     @Test
@@ -62,7 +72,6 @@ class TransactionServiceTest
         when(accountRepository.findByAccountNumber(fromAccountNumber)).thenReturn(Optional.of(sender));
         when(accountRepository.findByAccountNumber(toAccountNumber)).thenReturn(Optional.of(receiver));
 
-        Transaction transferRequest = new Transaction();
         transferRequest.setFromAccount(fromAccountNumber);
         transferRequest.setToAccount(toAccountNumber);
         transferRequest.setAmount(transferAmount);
@@ -92,7 +101,6 @@ class TransactionServiceTest
         when(accountRepository.findByAccountNumber(fromAccountNumber)).thenReturn(Optional.of(sender));
         when(accountRepository.findByAccountNumber(toAccountNumber)).thenReturn(Optional.of(receiver));
 
-        Transaction transferRequest = new Transaction();
         transferRequest.setFromAccount(fromAccountNumber);
         transferRequest.setToAccount(toAccountNumber);
         transferRequest.setAmount(transferAmount);
@@ -120,7 +128,7 @@ class TransactionServiceTest
         when(accountRepository.findByAccountNumber(fromAccountNumber)).thenReturn(Optional.of(sender));
         when(accountRepository.findByAccountNumber(toAccountNumber)).thenReturn(Optional.of(receiver));
 
-        Transaction transferRequest = new Transaction();
+
         transferRequest.setFromAccount(fromAccountNumber);
         transferRequest.setToAccount(toAccountNumber);
         transferRequest.setAmount(transferAmount);
@@ -143,7 +151,6 @@ class TransactionServiceTest
 
         when(accountRepository.findByAccountNumber(fromAccountNumber)).thenReturn(Optional.of(sender));
 
-        Transaction transferRequest = new Transaction();
         transferRequest.setFromAccount(fromAccountNumber);
         transferRequest.setToAccount(toAccountNumber);
         transferRequest.setAmount(transferAmount);
@@ -166,7 +173,6 @@ class TransactionServiceTest
 
         when(accountRepository.findByAccountNumber(toAccountNumber)).thenReturn(Optional.of(receiver));
 
-        Transaction transferRequest = new Transaction();
         transferRequest.setFromAccount(fromAccountNumber);
         transferRequest.setToAccount(toAccountNumber);
         transferRequest.setAmount(transferAmount);
@@ -194,7 +200,6 @@ class TransactionServiceTest
         when(accountRepository.findByAccountNumber(fromAccountNumber)).thenReturn(Optional.of(sender));
         when(accountRepository.findByAccountNumber(toAccountNumber)).thenReturn(Optional.of(receiver));
 
-        Transaction transferRequest = new Transaction();
         transferRequest.setFromAccount(fromAccountNumber);
         transferRequest.setToAccount(toAccountNumber);
         transferRequest.setAmount(transferAmount);
@@ -222,7 +227,6 @@ class TransactionServiceTest
         when(accountRepository.findByAccountNumber(fromAccountNumber)).thenReturn(Optional.of(sender));
         when(accountRepository.findByAccountNumber(toAccountNumber)).thenReturn(Optional.of(receiver));
 
-        Transaction transferRequest = new Transaction();
         transferRequest.setFromAccount(fromAccountNumber);
         transferRequest.setToAccount(toAccountNumber);
         transferRequest.setAmount(transferAmount);

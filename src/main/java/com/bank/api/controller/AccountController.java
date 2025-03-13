@@ -1,7 +1,7 @@
 package com.bank.api.controller;
 
 import com.bank.api.dto.BankAccountDTO;
-import com.bank.api.dto.BankResponse;
+import com.bank.api.dto.response.BankResponse;
 import com.bank.api.entity.BankAccount;
 import com.bank.api.service.bank.BankAccountService;
 import org.slf4j.Logger;
@@ -49,7 +49,8 @@ public class AccountController
      * soft delete account, will flag an account with deleted flag
      * */
     @DeleteMapping("/{accountNumber}")
-    public ResponseEntity<BankResponse<BankAccountDTO>> deleteByAccountNumber(@PathVariable String accountNumber) {
+    public ResponseEntity<BankResponse<BankAccountDTO>> deleteByAccountNumber(@PathVariable String accountNumber)
+    {
         BankAccountDTO bankAccountDTO = bankAccountService.deleteByAccountNumber(accountNumber);
         return ResponseEntity.ok(new BankResponse<>(true, "Account soft deleted", bankAccountDTO));
     }
@@ -58,7 +59,8 @@ public class AccountController
      * Restore account, deleted flag set back to false
      * */
     @PostMapping("/{accountNumber}/restore")
-    public ResponseEntity<BankResponse<BankAccountDTO>> restoreAccount(@PathVariable String accountNumber) {
+    public ResponseEntity<BankResponse<BankAccountDTO>> restoreAccount(@PathVariable String accountNumber)
+    {
         BankAccountDTO bankAccountDTO = bankAccountService.restoreAccount(accountNumber);
         return ResponseEntity.ok(new BankResponse<>(true, "Account restored successfully", bankAccountDTO));
     }

@@ -22,4 +22,6 @@ public interface BankAccountRepository extends JpaRepository<BankAccount, Long>
 
     @Query("SELECT b FROM BankAccount b WHERE b.deletedAt IS NOT NULL")
     List<BankAccount> findAllDeletedAccounts();
+
+    boolean existsByAccountNumber(String fromAccount);
 }

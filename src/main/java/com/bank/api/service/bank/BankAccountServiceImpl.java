@@ -116,13 +116,15 @@ public class BankAccountServiceImpl implements BankAccountService
     }
 
     @Override
+    @Transactional(readOnly = true)  // 🔹 Fix: Ensure method runs within a transaction
     public BigDecimal getAccountBalance(String accountNumber)
     {
         logger.info("Fetching balance for account: {}", accountNumber);
 
         return accountRepository.findByAccountNumber(accountNumber)
                 .map(BankAccount::getBalance)
-                .orElseThrow(() -> {
+                .orElseThrow(() ->
+                {
                     logger.error("Account number {} not found", accountNumber);
                     return new RuntimeException("Bank account not found");
                 });
@@ -130,7 +132,8 @@ public class BankAccountServiceImpl implements BankAccountService
 
     @Transactional
     @Override
-    public BankAccountDTO deleteByAccountNumber(String accountNumber) {
+    public BankAccountDTO deleteByAccountNumber(String accountNumber)
+    {
         return accountRepository.findByAccountNumber(accountNumber)
                 .map(account -> {
                     if (account.getBalance().compareTo(BigDecimal.ZERO) > 0) {
@@ -145,7 +148,8 @@ public class BankAccountServiceImpl implements BankAccountService
 
     @Transactional
     @Override
-    public BankAccountDTO restoreAccount(String accountNumber) {
+    public BankAccountDTO restoreAccount(String accountNumber)
+    {
         return accountRepository.findByAccountNumber(accountNumber)
                 .map(account -> {
                     if (account.isDeleted()) {
